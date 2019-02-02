@@ -2,8 +2,6 @@
 # in all the alpine java images.
 FROM openjdk:8-jre
 
-MAINTAINER Zach Wily <zach@instructure.com>
-
 # We need java and node in this image, so we'll start with java (cause it's
 # more hairy), and then dump in the node Dockerfile below. It'd be nice if there
 # was a more elegant way to compose at the image level, but I suspect the
@@ -17,7 +15,8 @@ MAINTAINER Zach Wily <zach@instructure.com>
 ## Copyright (c) 2015 Joyent, Inc.
 ## Copyright (c) 2015 Node.js contributors
 ##
-
+RUN mkdir ~/.gnupg
+RUN echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf
 # gpg keys listed at https://github.com/nodejs/node
 RUN set -ex \
   && for key in \
@@ -30,7 +29,9 @@ RUN set -ex \
     B9AE9905FFD7803F25714661B63B535A4C206CA9 \
     C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
   ; do \
-    gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+    gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
+	    gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
+	    gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
   done
 
 ENV NPM_CONFIG_LOGLEVEL info
